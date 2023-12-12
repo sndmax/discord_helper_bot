@@ -1,10 +1,4 @@
-import {
-    Client,
-    Collection,
-    Interaction,
-    Message,
-    SlashCommandBuilder,
-} from 'discord.js';
+import { Client, Collection, Interaction, Message, SlashCommandBuilder } from 'discord.js';
 
 export type BotCommands = Collection<string, Command>;
 

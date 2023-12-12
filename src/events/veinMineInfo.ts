@@ -9,9 +9,7 @@ export default {
                 new EmbedBuilder()
                     .setColor(Colors.Aqua)
                     .setTitle('Veinmining')
-                    .setDescription(
-                        'Veinmine is disabled for blocks like dirt/cobble/stone/netherrack in this pack'
-                    )
+                    .setDescription('Veinmine is disabled for blocks like dirt/cobble/stone/netherrack in this pack')
                     .addFields([
                         {
                             name: 'Key Bindings',

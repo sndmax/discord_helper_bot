@@ -1,5 +1,6 @@
 import {
     ActionRowBuilder,
+    ButtonBuilder,
     ButtonInteraction,
     ButtonStyle,
     ChatInputCommandInteraction,
@@ -9,43 +10,35 @@ import {
     MessageActionRowComponentBuilder,
     SlashCommandBuilder,
 } from 'discord.js';
-import { teamsModel } from '../models';
 import { BotClient } from '../utils/types';
-import { createButton } from '../utils/createButton';
 import { getUser } from '../utils/getUser';
 import { updateStatus } from '../utils/updateStatus';
+import { findTeam, getTeamsList } from '../db';
 
-const getEmbed = async (client: BotClient) =>
+const makeEmbed = async (client: BotClient) =>
     new EmbedBuilder()
         .setColor(Colors.Orange)
         .setTitle('Hello! I will try to help you with some extra features.')
         .addFields({
             name: 'Currently looking for a teammate:',
             value:
-                (await teamsModel.getTeamsList())
+                (await getTeamsList())
                     .map((team: any) => getUser(client, team.username))
                     .filter((value) => value)
                     .join(', ') || 'No one 😟',
         });
 
-const getButtons = async (
-    interaction: CommandInteraction | ButtonInteraction
-) => {
-    const veinMineInfo = createButton('veinMineInfo', 'Veinmining');
-    const claimsInfo = createButton('claimsInfo', 'Claims');
-    const commandsInfo = createButton('commandsInfo', 'Commands');
-    const startTeamSearch = createButton(
-        'startTeamSearch',
-        'Start looking for a teammate',
-        ButtonStyle.Success
-    );
-    const stopTeamSearch = createButton(
-        'stopTeamSearch',
-        'Stop looking for a teammate',
-        ButtonStyle.Danger
-    );
+const makeButton = (id: string, label: string, style: ButtonStyle = ButtonStyle.Primary) =>
+    new ButtonBuilder().setCustomId(id).setLabel(label).setStyle(style);
 
-    const teamStatus = await teamsModel.findTeam(interaction.user.username);
+const getAllButtons = async (interaction: CommandInteraction | ButtonInteraction) => {
+    const veinMineInfo = makeButton('veinMineInfo', 'Veinmining');
+    const claimsInfo = makeButton('claimsInfo', 'Claims');
+    const commandsInfo = makeButton('commandsInfo', 'Commands');
+    const startTeamSearch = makeButton('startTeamSearch', 'Start looking for a teammate', ButtonStyle.Success);
+    const stopTeamSearch = makeButton('stopTeamSearch', 'Stop looking for a teammate', ButtonStyle.Danger);
+
+    const teamStatus = await findTeam(interaction.user.username);
 
     return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
         teamStatus ? stopTeamSearch : startTeamSearch,
@@ -55,23 +48,14 @@ const getButtons = async (
     );
 };
 
-export default {
-    data: new SlashCommandBuilder()
-        .setName('info')
-        .setDescription('Ask me for useful info!'),
-    async run(client: BotClient, interaction: ChatInputCommandInteraction) {
-        return updateInfoMessage(client, interaction);
-    },
-};
-
 export const updateInfoMessage = async (
     client: BotClient,
     interaction: ChatInputCommandInteraction | ButtonInteraction
 ) => {
-    const buttons = await getButtons(interaction);
+    const buttons = await getAllButtons(interaction);
     const messageData = {
         components: [buttons],
-        embeds: [await getEmbed(client)],
+        embeds: [await makeEmbed(client)],
         allowedMentions: { parse: [], repliedUser: false },
     };
 
@@ -84,4 +68,11 @@ export const updateInfoMessage = async (
     if (interaction.isButton()) {
         return interaction.message.edit(messageData);
     }
+};
+
+export default {
+    data: new SlashCommandBuilder().setName('info').setDescription('Ask me for useful info!'),
+    async run(client: BotClient, interaction: ChatInputCommandInteraction) {
+        return updateInfoMessage(client, interaction);
+    },
 };

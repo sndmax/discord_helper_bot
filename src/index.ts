@@ -1,17 +1,10 @@
-import {
-    Client,
-    Collection,
-    Events,
-    GatewayIntentBits,
-    REST,
-    Routes,
-} from 'discord.js';
+import { Client, Collection, Events, GatewayIntentBits, REST, Routes } from 'discord.js';
+import { readdirSync } from 'fs';
+import { join } from 'path';
 import { config } from './config';
-import { teamsModel } from './models';
-
 import { BotClient } from './utils/types';
-import { iterateModule } from './utils/iterateModule';
 import { updateStatus } from './utils/updateStatus';
+import { Teams } from './db';
 
 export const client = new Client({
     intents: [
@@ -24,6 +17,16 @@ export const client = new Client({
 
 client.commands = new Collection();
 client.events = new Collection();
+
+const iterateModule = async (dirName: string, callback: (module: any) => void) => {
+    const files = readdirSync(join(__dirname, dirName)).filter((file) => !file.endsWith('.map'));
+
+    for (const file of files) {
+        const module = await import(join('file://', __dirname, dirName, file));
+        console.log(`👌 Loaded: ${module.default.data.name}`);
+        callback(module.default);
+    }
+};
 
 const registerSlashCommands = async () => {
     await iterateModule('commands', (module: any) => {
@@ -46,12 +49,12 @@ const registerEvents = async () => {
 };
 
 client.once(Events.ClientReady, async (readyClient) => {
-    await teamsModel.Teams.sync();
-    registerSlashCommands();
-    registerEvents();
-    console.log('🤖 Discord bot ' + readyClient.user.tag + ' is ready!');
+    await Teams.sync();
+    await registerSlashCommands();
+    await registerEvents();
+    await updateStatus(readyClient as BotClient);
 
-    updateStatus(readyClient as BotClient);
+    console.log('🤖 Discord bot ' + readyClient.user.tag + ' is ready!');
 });
 
 client.login(config.DISCORD_TOKEN);
