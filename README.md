@@ -1,4 +1,5 @@
 ## Features
+- Automatically give role on join
 - Find a teammate
 - List searching a teammate members
 - Show searching a teammate members amount in bot status
