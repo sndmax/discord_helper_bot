@@ -4,9 +4,9 @@
   "description": "Discord bot for om_r's discord server",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
-    "build": "tsup src/index.ts --minify"
+    "start": "tsx watch src/index.ts",
+    "_start" : "node dist/index.js",
+    "_build": "tsup src/index.ts --minify --onSuccess \"node dist/index.js\""
   },
   "author": "sndmax",
   "license": "ISC",
